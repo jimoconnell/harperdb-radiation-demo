@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Radiation Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2em; }
+    canvas { max-width: 80%; max-height: 80%; }
+  </style>
+</head>
+<body>
+  <h1>Live Radiation Readings</h1>
+  <canvas id="radiationChart"></canvas>
+<div id="latest-reading" style="margin-top: 2em; font-size: 1.5em;">
+  Current CPM: <strong id="current-cpm">—</strong>,
+  µSv/h: <strong id="current-usv">—</strong>
+  <span id="reading-status" style="margin-left: 1em;"></span>
+</div>
+  <script>
+    const ctx = document.getElementById('radiationChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'CPM',
+          data: [],
+          borderWidth: 2,
+          fill: false,
+        }]
+      },
+      options: {
+        scales: {
+          x: { title: { display: true, text: 'Timestamp' } },
+          y: { title: { display: true, text: 'Counts Per Minute (CPM)' }, beginAtZero: true }
+        }
+      }
+    });
+
+//    async function fetchData() {
+ //    const res = await fetch('/radiation/list');
+  //    const data = await res.json();
+   //   const reversed = data.reverse(); // oldest first
+//
+//      chart.data.labels = reversed.map(r => r.timestamp);
+//      chart.data.datasets[0].data = reversed.map(r => r.cpm);
+//      chart.update();
+//    }
+
+//    fetchData();
+//    setInterval(fetchData, 5000); // refresh every 5s
+async function fetchData() {
+  const res = await fetch('/radiation/list');
+  const data = await res.json();
+  const reversed = data.reverse();
+
+  chart.data.labels = reversed.map(r => r.timestamp);
+  chart.data.datasets[0].data = reversed.map(r => r.cpm);
+  chart.update();
+
+  const latest = reversed[reversed.length - 1];
+  if (latest) {
+    document.getElementById('current-cpm').textContent = latest.cpm;
+    document.getElementById('current-usv').textContent = latest.usv.toFixed(2);
+
+    const statusEl = document.getElementById('reading-status');
+    const cpm = latest.cpm;
+
+    if (cpm < 100) {
+      statusEl.textContent = 'Normal background';
+      statusEl.style.color = 'green';
+    } else if (cpm < 1000) {
+      statusEl.textContent = 'Elevated';
+      statusEl.style.color = 'orange';
+    } else {
+      statusEl.textContent = 'High radiation!';
+      statusEl.style.color = 'red';
+    }
+  }
+}
+
+setInterval(fetchData, 1000);    
+  </script>
+</body>
+</html>

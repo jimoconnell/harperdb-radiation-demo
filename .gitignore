@@ -1,0 +1,38 @@
+# Ignore Python virtual environments
+venv/
+.geiger-env/
+__pycache__/
+*.pyc
+
+# Node modules
+node_modules/
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# Local environment files
+.env
+*.local
+
+# Ignore local builds or temp files
+dist/
+build/
+*.bak
+*.swp
+*.tmp
+*.log
+
+# Ignore files copied from devices or temp transfers
+files
+*.csv
+*.tsv
+
+# VS Code config (optional)
+.vscode/
+
+# Ignore uploads or archives
+*.zip
+*.tar.gz

@@ -1,0 +1,168 @@
+Metadata-Version: 2.1
+Name: pygmc
+Version: 0.14.1
+Summary: Python package for Geiger–Müller Counter (GMC)
+Author: Thomaz
+License: MIT License
+        
+        Copyright (c) 2023 Thomaz
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/Wikilicious/pygmc
+Project-URL: Documentation, https://pygmc.readthedocs.io/
+Project-URL: Source, https://github.com/Wikilicious/pygmc
+Project-URL: Tracker, https://github.com/Wikilicious/pygmc/issues
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Physics
+Classifier: Topic :: System :: Hardware :: Universal Serial Bus (USB)
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pyserial >=3.4
+
+# PyGMC
+[![PyPI - Version](https://img.shields.io/pypi/v/pygmc?logo=python&color=green)](https://pypi.org/project/pygmc/)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Wikilicious/pygmc/python-app.yml?branch=master&logo=github&label=Tests)](https://github.com/Wikilicious/pygmc/tree/master/tests)
+[![Read the Docs](https://img.shields.io/readthedocs/pygmc?logo=readthedocs)](https://pygmc.readthedocs.io/)
+[![codecov](https://codecov.io/gh/Wikilicious/pygmc/graph/badge.svg?token=9X2V5CWPDM)](https://codecov.io/gh/Wikilicious/pygmc)
+[![PyPI](https://img.shields.io/pepy/dt/pygmc?logo=python&label=Total%20Downloads)](https://pypi.org/project/pygmc/)
+[![Monthly Downloads](https://static.pepy.tech/badge/pygmc/month)](https://pypi.org/project/pygmc/)
+
+PyGMC is a Python API for Geiger–Müller Counters (GMCs) / Geiger Counters.
+It has just one dependency (pyserial) and works on multiple operating
+systems: Windows, OSX, Linux. PyGMC aims to be a minimalistic interface -
+lowering the installation requirements and allowing the user to build their
+own tools on top of a stable package.
+
+- [PYPI](https://pypi.org/project/pygmc/)
+- [Documentation](https://pygmc.readthedocs.io/)
+
+## Installation 
+```shell
+pip install pygmc
+```
+```shell
+conda install conda-forge::pygmc
+```
+Conda PyGMC version may lag latest PyPI version.
+
+## Example Usage
+
+#### Jupyter Notebook
+![](https://github.com/Wikilicious/pygmc/blob/master/pygmc_usage_example_0.9.1.gif)
+
+#### Auto discover connected GMC, auto identify baudrate, and auto select correct device.
+```pycon
+import pygmc
+
+gc = pygmc.connect()
+
+ver = gc.get_version()
+print(ver)
+
+cpm = gc.get_cpm()
+print(cpm)
+```
+
+#### Connect to specified GMC device with exact USB port/device/com.
+```pycon
+import pygmc
+
+gc = pygmc.GMC320('/dev/ttyUSB0')
+
+cpm = gc.get_cpm()
+print(cpm)
+```
+
+#### Read device history into DataFrame
+```pycon
+import pandas as pd
+import pygmc
+
+gc = pygmc.GMC320('/dev/ttyUSB0')
+
+history = gc.get_history_data()
+df = pd.DataFrame(history[1:], columns=history[0])
+```
+| datetime            |   count | unit   | mode         | reference_datetime   | notes   |
+|:--------------------|--------:|:-------|:-------------|:---------------------|:--------|
+| 2023-04-19 20:37:18 |      11 | CPM    | every minute | 2023-04-19 20:36:18  |         |
+| 2023-04-19 20:38:18 |      20 | CPM    | every minute | 2023-04-19 20:36:18  |         |
+| 2023-04-19 20:39:18 |      19 | CPM    | every minute | 2023-04-19 20:36:18  |         |
+| 2023-04-19 20:40:18 |      23 | CPM    | every minute | 2023-04-19 20:36:18  |         |
+| 2023-04-19 20:41:18 |      20 | CPM    | every minute | 2023-04-19 20:36:18  |         |
+
+### Devices
+| Device                     | Brand | Notes          |
+|----------------------------| ----- |----------------|
+| GMC-300S ✔️✔️                | GQ Electronics | A little picky |
+| GMC-300E+ / GMC-300E Plus  | GQ Electronics |
+| GMC-320+ / GMC-320 Plus ✔️✔️ |GQ Electronics | Works smoothly |
+| GMC-320S                   | GQ Electronics |
+| GMC-500                    | GQ Electronics |
+| GMC-500+ / GMC-500 Plus ✔️✔️ | GQ Electronics | Works smoothly |
+| GMC-600                    | GQ Electronics |
+| GMC-600+ / GMC-600 Plus ✔️✔️ | GQ Electronics |
+| GMC-800 ✔️✔️                   | GQ Electronics | *Finally Working |
+| GMC-SE ✔️                  | GQ Electronics | RFC1201 |
+
+✔️✔️=physically confirmed works  
+✔️=user confirmed works  
+*Incorrect documentation caused incorrect implementation with `pygmc<=0.10.0`
+
+![](https://www.gqelectronicsllc.com/comersus/store/catalog/300s%20main.jpg)
+![](https://www.gqelectronicsllc.com/comersus/store/catalog/GMC-320-Plus_350.png)
+![](https://www.gqelectronicsllc.com/comersus/store/catalog/GMC-500HV_350.png)
+
+### Contributors
+
+- [Thomaz](https://github.com/Wikilicious)
+- [Huy](https://github.com/huyndao)
+
+### Notes
+- Alternative Python projects for GQ GMC:
+  - [GeigerLog](https://sourceforge.net/projects/geigerlog/)
+  - gq-gmc-control
+  - gmc
+- Device website [GQ Electronics](https://gqelectronicsllc.com/?referer=pygmc) Seattle, WA
+  - Not affiliated in any way.
+
+
+---
+#### Known Issues
+- Ubuntu Issue
+    - Ubuntu requires fixing a bug to be able to connect to any GQ GMC device.  
+USB devices use VID (vendor ID) and PID (Divice ID)... It is common for unrelated devices to use a common manufacture for their USB interface.
+The issue with Ubuntu is that it assumes `1A86:7523` is a "Braille" device (for the blind) and, ironically, blindly treats it as such. 
+    - This causes the GQ GMC device to not connect. 
+- Ubuntu fix
+  - The fix is to comment out the `udev` rule that does this. The text file may be in two places.
+    - `/usr/lib/udev/85-brltty.rules`
+    - `/usr/lib/udev/rules.d/85-brltty.rules`
+  - Find the line below and comment it out.
+    - `ENV{PRODUCT}=="1a86/7523/*", ENV{BRLTTY_BRAILLE_DRIVER}="bm", GOTO="brltty_usb_run"`
+  - We see Ubuntu assumes `1A86:7523` is a `Baum [NLS eReader Zoomax (20 cells)]` device.

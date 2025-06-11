@@ -1,0 +1,8 @@
+{
+  "custom_functions": [
+    {
+      "name": "tasks-api",
+      "path": "/Users/jim/projects/harper-demo/custom_functions/tasks-api"
+    }
+  ]
+}
