@@ -39,10 +39,10 @@ deactivate nondestructive
 if [ "${OSTYPE:-}" = "cygwin" ] || [ "${OSTYPE:-}" = "msys" ] ; then
     # transform D:\path\to\venv to /d/path/to/venv on MSYS
     # and to /cygdrive/d/path/to/venv on Cygwin
-    export VIRTUAL_ENV=$(cygpath /home/jim/projects/geiger_counter)
+    export VIRTUAL_ENV=$(cygpath /home/jim/projects/harperdb-radiation-demo/geiger_counter)
 else
     # use the path as-is
-    export VIRTUAL_ENV=/home/jim/projects/geiger_counter
+    export VIRTUAL_ENV=/home/jim/projects/harperdb-radiation-demo/geiger_counter
 fi
 
 _OLD_VIRTUAL_PATH="$PATH"

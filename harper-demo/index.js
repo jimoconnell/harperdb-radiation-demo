@@ -6,10 +6,10 @@ const port = 3000;
 app.use(express.json());
 app.use(express.static('public'));
 
-const HARPERDB_URL = 'https://your-cloud-url.harperdbcloud.com';
+const HARPERDB_URL = 'https://mmdc-1-mmdc.harperdbcloud.com';
 const HARPERDB_AUTH = {
-  username: 'user',
-  password: 'password',
+  username: 'jim',
+  password: 'KAWA83hs',
 };
 
 // Add task
