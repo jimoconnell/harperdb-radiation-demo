@@ -20,7 +20,7 @@ app.post('/add', async (req, res) => {
     const response = await axios.post(HARPERDB_URL, {
       operation: 'insert',
       schema: 'tasks',
-      table: 'tasks',
+      table: 'radiation',
       records: [data],
     }, {
       auth: HARPERDB_AUTH,
@@ -57,7 +57,7 @@ app.get('/radiation/list', async (req, res) => {
   try {
     const response = await axios.post(HARPERDB_URL, {
       operation: 'sql',
-      sql: 'SELECT * FROM tasks.radiation ORDER BY timestamp DESC LIMIT 100',
+      sql: 'SELECT * FROM tasks.radiation ORDER BY timestamp DESC LIMIT 1000',
     }, {
       auth: HARPERDB_AUTH,
     });

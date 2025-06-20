@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Radiation Map with Legend & Toggle</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; font-family: sans-serif; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    .legend, .controls, .refresh-time {
+      position: absolute;
+      z-index: 1;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 10px;
+      font-size: 13px;
+      border-radius: 5px;
+    }
+    .legend { bottom: 20px; left: 10px; }
+    .controls { top: 10px; left: 10px; }
+    .refresh-time { top: 10px; right: 10px; }
+    .alert { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px; text-align: center; background: red; color: white; font-weight: bold; display: none; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="controls">
+    <label><input type="checkbox" id="toggle-heatmap" checked> Show Heatmap</label><br>
+    <label><input type="checkbox" id="toggle-points" checked> Show Points</label>
+  </div>
+  <div class="legend">
+    <strong>CPM Color Scale</strong><br>
+    <span style="color: lime;">●</span> &lt; 200<br>
+    <span style="color: yellow;">●</span> 200–499<br>
+    <span style="color: orange;">●</span> 500–999<br>
+    <span style="color: red;">●</span> ≥ 1000
+  </div>
+  <div class="refresh-time" id="refresh-time">Last refresh: —</div>
+  <div class="alert" id="alert-banner">⚠️ High radiation detected (CPM ≥ 1000)</div>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoiamltb2Nvbm5lbGwiLCJhIjoiY21jNTY2b2g3MDd1djJscHcweXZwZXBlciJ9.0uetDtTe-7WbqYvrm-9lXA';
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/dark-v10',
+      center: [-77.03, 41.20],
+      zoom: 11
+    });
+
+    const popup = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false
+    });
+
+    async function loadMapData() {
+      const res = await fetch('/radiation/list');
+      const data = await res.json();
+
+      const now = new Date();
+      const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+      const recent = data.filter(r => new Date(r.timestamp) > fiveMinutesAgo);
+
+      const geojson = {
+        type: 'FeatureCollection',
+        features: recent.map(r => ({
+          type: 'Feature',
+          properties: {
+            cpm: r.cpm,
+            usv: r.usv,
+            user: r.user || "unknown",
+            timestamp: r.timestamp
+          },
+          geometry: {
+            type: 'Point',
+            coordinates: [r.lon, r.lat]
+          }
+        }))
+      };
+
+      const highReading = recent.some(r => r.cpm >= 1000);
+      document.getElementById('alert-banner').style.display = highReading ? 'block' : 'none';
+
+      document.getElementById('refresh-time').textContent = "Last refresh: " + now.toLocaleTimeString();
+
+      if (map.getSource('radiation')) {
+        map.getSource('radiation').setData(geojson);
+      } else {
+        map.addSource('radiation', { type: 'geojson', data: geojson });
+
+        map.addLayer({
+          id: 'radiation-heat',
+          type: 'heatmap',
+          source: 'radiation',
+          maxzoom: 13,
+          paint: {
+            'heatmap-weight': [
+              'interpolate', ['linear'], ['get', 'cpm'],
+              0, 0,
+              100, 0.2,
+              300, 0.5,
+              1000, 1
+            ],
+            'heatmap-intensity': 1.5,
+            'heatmap-color': [
+              'interpolate',
+              ['linear'],
+              ['heatmap-density'],
+              0, 'rgba(0,0,0,0)',
+              0.05, 'lime',
+              0.2, 'yellow',
+              0.4, 'orange',
+              0.6, 'red',
+              1, 'maroon'
+            ],
+            'heatmap-radius': 25,
+            'heatmap-opacity': 0.8
+          }
+        });
+
+        map.addLayer({
+          id: 'radiation-points',
+          type: 'circle',
+          source: 'radiation',
+          minzoom: 13,
+          paint: {
+            'circle-radius': 6,
+            'circle-color': [
+              'interpolate',
+              ['linear'],
+              ['get', 'cpm'],
+              0, 'lime',
+              200, 'yellow',
+              500, 'orange',
+              1000, 'red'
+            ],
+            'circle-stroke-width': 1,
+            'circle-stroke-color': '#000'
+          }
+        });
+
+        map.on('mouseenter', 'radiation-points', (e) => {
+          map.getCanvas().style.cursor = 'pointer';
+          const props = e.features[0].properties;
+          const coordinates = e.features[0].geometry.coordinates.slice();
+          const content = `
+            <strong>CPM:</strong> ${props.cpm}<br>
+            <strong>µSv/h:</strong> ${props.usv}<br>
+            <strong>User:</strong> ${props.user}<br>
+            <strong>Time:</strong> ${props.timestamp}
+          `;
+          popup.setLngLat(coordinates).setHTML(content).addTo(map);
+        });
+
+        map.on('mouseleave', 'radiation-points', () => {
+          map.getCanvas().style.cursor = '';
+          popup.remove();
+        });
+      }
+    }
+
+    document.getElementById('toggle-heatmap').addEventListener('change', (e) => {
+      map.setLayoutProperty('radiation-heat', 'visibility', e.target.checked ? 'visible' : 'none');
+    });
+
+    document.getElementById('toggle-points').addEventListener('change', (e) => {
+      map.setLayoutProperty('radiation-points', 'visibility', e.target.checked ? 'visible' : 'none');
+    });
+
+    map.on('load', () => {
+      loadMapData();
+      setInterval(loadMapData, 10000);
+    });
+  </script>
+</body>
+</html>
