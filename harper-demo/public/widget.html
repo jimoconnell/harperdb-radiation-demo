@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Radiation Live Widget (WSS)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .reading {
+      font-size: 2rem;
+      margin: 0.5rem;
+    }
+    .status {
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: #0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="reading">CPM: <span id="cpm">—</span></div>
+  <div class="reading">µSv/h: <span id="usv">—</span></div>
+  <div class="reading">User: <span id="user">—</span></div>
+  <div class="reading">Time: <span id="timestamp">—</span></div>
+  <div class="status" id="status">Connecting to WebSocket...</div>
+
+  <script>
+    const ws = new WebSocket('wss://mmdc-1-mmdc.harperdbcloud.com/radiation');
+
+    ws.onopen = () => {
+      document.getElementById('status').textContent = "✅ Connected to radiation stream";
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        document.getElementById('cpm').textContent = data.cpm;
+        document.getElementById('usv').textContent = data.usv;
+        document.getElementById('user').textContent = data.user || 'n/a';
+        document.getElementById('timestamp').textContent = data.timestamp;
+      } catch (err) {
+        console.error("Invalid message:", event.data);
+      }
+    };
+
+    ws.onerror = (err) => {
+      document.getElementById('status').textContent = "❌ Error connecting to WebSocket";
+    };
+
+    ws.onclose = () => {
+      document.getElementById('status').textContent = "🔌 Disconnected";
+    };
+  </script>
+</body>
+</html>
